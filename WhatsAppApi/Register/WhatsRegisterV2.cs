@@ -50,7 +50,7 @@ namespace WhatsAppApi.Register
                 PhoneNumber pn = new PhoneNumber(phoneNumber);
                 string token = System.Uri.EscapeDataString(WhatsRegisterV2.GetToken(pn.Number));
                 
-                request = string.Format("https://v.whatsapp.net/v2/code?cc={0}&in={1}&to={0}{1}&method={2}&mcc={3}&mnc={4}&token={5}&id={6}&lg={7}&lc={8}", pn.CC, pn.Number, method, pn.MCC, pn.MNC, token, id, pn.ISO639, pn.ISO3166);
+                request = String.Format("https://v.whatsapp.net/v2/code?method={0}&in={1}&cc={2}&id={3}&lg={4}&lc={5}&token={6}&sim_mcc={7}&sim_mnc={8}", method, pn.Number, pn.CC, id, pn.ISO639, pn.ISO3166, token, "000", "000");
                 response = GetResponse(request);
                 password = response.GetJsonValue("pw");
                 if (!string.IsNullOrEmpty(password))
@@ -84,7 +84,7 @@ namespace WhatsAppApi.Register
                 }
                 PhoneNumber pn = new PhoneNumber(phoneNumber);
 
-                string uri = string.Format("https://v.whatsapp.net/v2/register?cc={0}&in={1}&id={2}&code={3}", pn.CC, pn.Number, id, code);
+                string uri = string.Format("https://v.whatsapp.net/v2/register?cc={0}&in={1}&id={2}&code={3}&lg={4}&lc={5}", pn.CC, pn.Number, id, code, pn.ISO639, pn.ISO3166);
                 response = GetResponse(uri);
                 if (response.GetJsonValue("status") == "ok")
                 {
@@ -115,7 +115,7 @@ namespace WhatsAppApi.Register
                 }
                 PhoneNumber pn = new PhoneNumber(phoneNumber);
 
-                string uri = string.Format("https://v.whatsapp.net/v2/exist?cc={0}&in={1}&id={2}", pn.CC, pn.Number, id);
+                string uri = string.Format("https://v.whatsapp.net/v2/exist?cc={0}&in={1}&id={2}&&lg={3}&lc={4}", pn.CC, pn.Number, id, pn.ISO639, pn.ISO3166);
                 response = GetResponse(uri);
                 if (response.GetJsonValue("status") == "ok")
                 {
