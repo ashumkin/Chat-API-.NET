@@ -26,10 +26,11 @@ namespace WhatsAppApi
             this._constructBase(phoneNum, imei, nick, debug, hidden);
         }
 
-        public void SendMessage(string to, string txt)
+        public string SendMessage(string to, string txt)
         {
             var tmpMessage = new FMessage(GetJID(to), true) { data = txt };
             this.SendMessage(tmpMessage, this.hidden);
+            return tmpMessage.identifier_key.ToString();
         }
 
         public void SendMessageVcard(string to, string name, string vcard_data)
@@ -38,7 +39,7 @@ namespace WhatsAppApi
             this.SendMessage(tmpMessage, this.hidden);
         }
 
-        public void SendSync(string[] numbers, string mode = "full", string context = "registration", int index = 0, bool last = true)
+        public void SendSync(string[] numbers, SyncMode mode = SyncMode.Delta, SyncContext context = SyncContext.Background, int index = 0, bool last = true)
         {
             List<ProtocolTreeNode> users = new List<ProtocolTreeNode>();
             foreach (string number in numbers)
@@ -56,8 +57,8 @@ namespace WhatsAppApi
                 new KeyValue("xmlns", "urn:xmpp:whatsapp:sync")
             }, new ProtocolTreeNode("sync", new KeyValue[]
                 {
-                    new KeyValue("mode", mode),
-                    new KeyValue("context", context),
+                    new KeyValue("mode", mode.ToString().ToLowerInvariant()),
+                    new KeyValue("context", context.ToString().ToLowerInvariant()),
                     new KeyValue("sid", DateTime.Now.ToFileTimeUtc().ToString()),
                     new KeyValue("index", index.ToString()),
                     new KeyValue("last", last.ToString())
@@ -461,18 +462,18 @@ namespace WhatsAppApi
         {
             string id = TicketCounter.MakeId("del_acct_");
             var node = new ProtocolTreeNode("iq",
-                                            new[]
+                                            new KeyValue[]
                                                 {
-                                                    new KeyValue("id", id), new KeyValue("type", "get"),
-                                                    new KeyValue("to", "s.whatsapp.net")
+                                                    new KeyValue("id", id), 
+                                                    new KeyValue("type", "get"),
+                                                    new KeyValue("to", "s.whatsapp.net"),
+                                                    new KeyValue("xmlns", "urn:xmpp:whatsapp:account")
                                                 },
                                             new ProtocolTreeNode[]
                                                 {
                                                     new ProtocolTreeNode("remove",
-                                                                         new[]
-                                                                             {
-                                                                                 new KeyValue("xmlns", "urn:xmpp:whatsapp:account")
-                                                                             })
+                                                                         null
+                                                                         )
                                                 });
             this.SendNode(node);
         }
@@ -754,7 +755,7 @@ namespace WhatsAppApi
         {
             string id = TicketCounter.MakeId("last_");
             var child = new ProtocolTreeNode("query", null);
-            var node = new ProtocolTreeNode("iq", new[] { new KeyValue("id", id), new KeyValue("type", "get"), new KeyValue("to", jid), new KeyValue("xmlns", "jabber:iq:last") }, child);
+            var node = new ProtocolTreeNode("iq", new[] { new KeyValue("id", id), new KeyValue("type", "get"), new KeyValue("to", GetJID(jid)), new KeyValue("xmlns", "jabber:iq:last") }, child);
             this.SendNode(node);
         }
 
@@ -772,10 +773,24 @@ namespace WhatsAppApi
             this.SendNode(node);
         }
 
-        public void SendSetPhoto(string jid, byte[] bytes, byte[] thumbnailBytes)
+        public void SendSetPhoto(string jid, byte[] bytes, byte[] thumbnailBytes = null)
         {
             string id = TicketCounter.MakeId("set_photo_");
+
+            bytes = this.ProcessProfilePicture(bytes);
+
             var list = new List<ProtocolTreeNode> { new ProtocolTreeNode("picture", null, null, bytes) };
+
+            if (thumbnailBytes == null)
+            {
+                //auto generate
+                thumbnailBytes = this.CreateThumbnail(bytes);
+            }
+
+            //debug
+            System.IO.File.WriteAllBytes("pic.jpg", bytes);
+            System.IO.File.WriteAllBytes("picthumb.jpg", thumbnailBytes);
+
             if (thumbnailBytes != null)
             {
                 list.Add(new ProtocolTreeNode("picture", new[] { new KeyValue("type", "preview") }, null, thumbnailBytes));
@@ -796,10 +811,19 @@ namespace WhatsAppApi
 
         public void SendStatusUpdate(string status)
         {
-            string id = TicketManager.GenerateId();
-            FMessage message = new FMessage(new FMessage.FMessageIdentifierKey("s.us", true, id));
-            var messageNode = GetMessageNode(message, new ProtocolTreeNode("body", null, WhatsApp.SYSEncoding.GetBytes(status)));
-            this.SendNode(messageNode);
+            string id = TicketCounter.MakeId("sendstatus_");
+
+            ProtocolTreeNode node = new ProtocolTreeNode("iq", new KeyValue[] {
+                new KeyValue("to", "s.whatsapp.net"),
+                new KeyValue("type", "set"),
+                new KeyValue("id", id),
+                new KeyValue("xmlns", "status")
+            },
+            new [] {
+                new ProtocolTreeNode("status", null, System.Text.Encoding.UTF8.GetBytes(status))
+            });
+
+            this.SendNode(node);
         }
 
         public void SendSubjectReceived(string to, string id)
@@ -891,7 +915,7 @@ namespace WhatsAppApi
 
         protected void SendVerbParticipants(string gjid, IEnumerable<string> participants, string id, string inner_tag)
         {
-            IEnumerable<ProtocolTreeNode> source = from jid in participants select new ProtocolTreeNode("participant", new[] { new KeyValue("jid", jid) });
+            IEnumerable<ProtocolTreeNode> source = from jid in participants select new ProtocolTreeNode("participant", new[] { new KeyValue("jid", GetJID(jid)) });
             var child = new ProtocolTreeNode(inner_tag, null, source);
             var node = new ProtocolTreeNode("iq", new[] { new KeyValue("id", id), new KeyValue("type", "set"), new KeyValue("xmlns", "w:g"), new KeyValue("to", GetJID(gjid)) }, child);
             this.SendNode(node);
