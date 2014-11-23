@@ -50,7 +50,7 @@ namespace WhatsAppApi.Register
                 PhoneNumber pn = new PhoneNumber(phoneNumber);
                 string token = System.Uri.EscapeDataString(WhatsRegisterV2.GetToken(pn.Number));
                 
-                request = String.Format("https://v.whatsapp.net/v2/code?method={0}&in={1}&cc={2}&id={3}&lg={4}&lc={5}&token={6}&sim_mcc={7}&sim_mnc={8}", method, pn.Number, pn.CC, id, pn.ISO639, pn.ISO3166, token, "000", "000");
+                request = String.Format("https://v.whatsapp.net/v2/code?method={0}&in={1}&cc={2}&id={3}&lg={4}&lc={5}&token={6}&mcc={7}&mnc={8}&sim_mcc={7}&sim_mnc={8}", method, pn.Number, pn.CC, id, pn.ISO639, pn.ISO3166, token, "000", "000");
                 response = GetResponse(request);
                 password = response.GetJsonValue("pw");
                 if (!string.IsNullOrEmpty(password))
