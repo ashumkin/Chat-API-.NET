@@ -305,13 +305,20 @@ namespace WhatsAppApi
             {
                 throw new NotImplementedException(node.NodeString());
             }
-            if (node.GetChild("body") != null)
+            if (node.GetChild("body") != null || node.GetChild("enc") != null)
             {
-                //text message
-                this.fireOnGetMessage(node, node.GetAttribute("from"), node.GetAttribute("id"), node.GetAttribute("notify"), System.Text.Encoding.UTF8.GetString(node.GetChild("body").GetData()), autoReceipt);
-                if (autoReceipt)
+                // text message
+                // encrypted messages have no body node. Instead, the encrypted cipher text is provided within the enc node
+                var contentNode = node.GetChild("body") ?? node.GetChild("enc");
+                if (contentNode != null)
                 {
-                    this.sendMessageReceived(node);
+                    this.fireOnGetMessage(node, node.GetAttribute("from"), node.GetAttribute("id"),
+                                        node.GetAttribute("notify"), System.Text.Encoding.UTF8.GetString(contentNode.GetData()),
+                                        autoReceipt);
+                    if (autoReceipt)
+                    {
+                        this.sendMessageReceived(node);
+                    }
                 }
             }
             if (node.GetChild("media") != null)
