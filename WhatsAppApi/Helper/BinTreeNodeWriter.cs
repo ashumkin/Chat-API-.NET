@@ -31,7 +31,7 @@ namespace WhatsAppApi.Helper
             this.buffer.Add((byte)'W');
             this.buffer.Add((byte)'A');
             this.buffer.Add(0x1);
-            this.buffer.Add(0x4);
+            this.buffer.Add(0x5);
             this.buffer.AddRange(ret);
             ret = buffer.ToArray();
             this.buffer = new List<byte>();
