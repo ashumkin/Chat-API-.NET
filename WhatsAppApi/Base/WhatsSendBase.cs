@@ -202,6 +202,13 @@ namespace WhatsAppApi
                         break;
                 }
 
+                var list = node.GetChild("list");
+                if (list != null)
+                    foreach (var receipt in list.GetAllChildren())
+                    {
+                        this.fireOnGetMessageReceivedClient(from, receipt.GetAttribute("id"));
+                    }
+
                 //send ack
                 SendNotificationAck(node, type);
             }
