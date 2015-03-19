@@ -317,14 +317,7 @@ namespace WhatsAppApi
 
                     TcpClient tc = new TcpClient(uri.Host, 443);
                     SslStream ssl = new SslStream(tc.GetStream());
-                    try
-                    {
-                        ssl.AuthenticateAsClient(uri.Host);
-                    }
-                    catch (Exception e)
-                    {
-                        throw e;
-                    }
+                    ssl.AuthenticateAsClient(uri.Host);
 
                     List<byte> buf = new List<byte>();
                     buf.AddRange(Encoding.UTF8.GetBytes(post));
@@ -570,8 +563,8 @@ namespace WhatsAppApi
         {
             string id = TicketCounter.MakeId("privacylist_");
             var innerChild = new ProtocolTreeNode("list", new[] { new KeyValue("name", "default") });
-            var child = new ProtocolTreeNode("query", new KeyValue[] { new KeyValue("xmlns", "jabber:iq:privacy") }, innerChild);
-            var node = new ProtocolTreeNode("iq", new KeyValue[] { new KeyValue("id", id), new KeyValue("type", "get") }, child);
+            var child = new ProtocolTreeNode("query", null, innerChild);
+            var node = new ProtocolTreeNode("iq", new KeyValue[] { new KeyValue("id", id), new KeyValue("type", "get"), new KeyValue("xmlns", "jabber:iq:privacy") }, child);
             this.SendNode(node);
         }
 
@@ -804,8 +797,8 @@ namespace WhatsAppApi
             string id = TicketCounter.MakeId("privacy_");
             ProtocolTreeNode[] nodeArray = Enumerable.Select<string, ProtocolTreeNode>(jidSet, (Func<string, int, ProtocolTreeNode>)((jid, index) => new ProtocolTreeNode("item", new KeyValue[] { new KeyValue("type", "jid"), new KeyValue("value", jid), new KeyValue("action", "deny"), new KeyValue("order", index.ToString(CultureInfo.InvariantCulture)) }))).ToArray<ProtocolTreeNode>();
             var child = new ProtocolTreeNode("list", new KeyValue[] { new KeyValue("name", "default") }, (nodeArray.Length == 0) ? null : nodeArray);
-            var node2 = new ProtocolTreeNode("query", new KeyValue[] { new KeyValue("xmlns", "jabber:iq:privacy") }, child);
-            var node3 = new ProtocolTreeNode("iq", new KeyValue[] { new KeyValue("id", id), new KeyValue("type", "set") }, node2);
+            var node2 = new ProtocolTreeNode("query", null, child);
+            var node3 = new ProtocolTreeNode("iq", new KeyValue[] { new KeyValue("id", id), new KeyValue("type", "set"), new KeyValue("xmlns", "jabber:iq:privacy") }, node2);
             this.SendNode(node3);
         }
 
