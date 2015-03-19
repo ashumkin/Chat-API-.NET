@@ -30,8 +30,9 @@ namespace WhatsAppApi.Helper
                 this.buffer.AddRange(pInput);
             }
 
-            int stanzaFlag = (this.peekInt8() & 0xF0) >> 4;
-            int stanzaSize = this.peekInt16(1);
+            int firstByte = this.peekInt8();
+            int stanzaFlag = (firstByte & 0xF0) >> 4;
+            int stanzaSize = this.peekInt16(1) | ((firstByte & 0x0F) << 16);
 
             int flags = stanzaFlag;
             int size = stanzaSize;
@@ -56,7 +57,7 @@ namespace WhatsAppApi.Helper
                         Helper.DebugAdapter.Instance.fireOnPrintDebug(e);
                     }
                     this.buffer.Clear();
-                    this.buffer.AddRange(treeData);
+                    this.buffer.AddRange(treeData.Take(realStanzaSize).ToArray());
                 }
                 else
                 {
