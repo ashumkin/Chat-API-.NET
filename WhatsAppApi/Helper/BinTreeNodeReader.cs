@@ -13,7 +13,7 @@ namespace WhatsAppApi.Helper
 
         public BinTreeNodeReader()
         {
-            
+
         }
 
         public void SetKey(byte[] key, byte[] mac)
@@ -28,49 +28,50 @@ namespace WhatsAppApi.Helper
             {
                 this.buffer = new List<byte>();
                 this.buffer.AddRange(pInput);
+            }
 
-                int stanzaFlag = (this.peekInt8() & 0xF0) >> 4;
-                int stanzaSize = this.peekInt16(1);
+            int stanzaFlag = (this.peekInt8() & 0xF0) >> 4;
+            int stanzaSize = this.peekInt16(1);
 
-                int flags = stanzaFlag;
-                int size = stanzaSize;
+            int flags = stanzaFlag;
+            int size = stanzaSize;
 
-                this.readInt24();
+            this.readInt24();
 
-                bool isEncrypted = (stanzaFlag & 8) != 0;
+            bool isEncrypted = (stanzaFlag & 8) != 0;
 
-                if (isEncrypted)
+            if (isEncrypted)
+            {
+                if (this.Key != null)
                 {
-                    if (this.Key != null)
+                    var realStanzaSize = stanzaSize - 4;
+                    var macOffset = stanzaSize - 4;
+                    var treeData = this.buffer.ToArray();
+                    try
                     {
-                        var realStanzaSize = stanzaSize - 4;
-                        var macOffset = stanzaSize - 4;
-                        var treeData = this.buffer.ToArray();
-                        try
-                        {
-                            this.Key.DecodeMessage(treeData, macOffset, 0, realStanzaSize);
-                        }
-                        catch (Exception e)
-                        {
-                            Helper.DebugAdapter.Instance.fireOnPrintDebug(e);
-                        }
-                        this.buffer.Clear();
-                        this.buffer.AddRange(treeData);
+                        this.Key.DecodeMessage(treeData, macOffset, 0, realStanzaSize);
                     }
-                    else
+                    catch (Exception e)
                     {
-                        throw new Exception("Received encrypted message, encryption key not set");
+                        Helper.DebugAdapter.Instance.fireOnPrintDebug(e);
                     }
+                    this.buffer.Clear();
+                    this.buffer.AddRange(treeData);
                 }
-
-                if (stanzaSize > 0)
+                else
                 {
-                    ProtocolTreeNode node = this.nextTreeInternal();
-                    if (node != null)
-                        this.DebugPrint(node.NodeString("RECVD: "));
-                    return node;
+                    throw new Exception("Received encrypted message, encryption key not set");
                 }
             }
+
+            if (stanzaSize > 0)
+            {
+                ProtocolTreeNode node = this.nextTreeInternal();
+                if (node != null)
+                    this.DebugPrint(node.NodeString("RECVD: "));
+                return node;
+            }
+
             return null;
         }
 
@@ -284,7 +285,7 @@ namespace WhatsAppApi.Helper
             }
             return ret;
         }
-        
+
         protected int readInt24()
         {
             int ret = 0;
