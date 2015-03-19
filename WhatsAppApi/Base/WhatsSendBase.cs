@@ -158,140 +158,132 @@ namespace WhatsAppApi
 
         protected bool processInboundData(byte[] msgdata, bool autoReceipt = true)
         {
-            try
+            ProtocolTreeNode node = this.reader.nextTree(msgdata);
+            if (node == null)
+                return false;
+
+            if (ProtocolTreeNode.TagEquals(node, "challenge"))
             {
-                ProtocolTreeNode node = this.reader.nextTree(msgdata);
-                if (node != null)
+                this.processChallenge(node);
+            }
+            else if (ProtocolTreeNode.TagEquals(node, "success"))
+            {
+                this.loginStatus = CONNECTION_STATUS.LOGGEDIN;
+                this.accountinfo = new AccountInfo(node.GetAttribute("status"),
+                                                    node.GetAttribute("kind"),
+                                                    node.GetAttribute("creation"),
+                                                    node.GetAttribute("expiration"));
+                this.fireOnLoginSuccess(this.phoneNumber, node.GetData());
+            }
+            else if (ProtocolTreeNode.TagEquals(node, "failure"))
+            {
+                this.loginStatus = CONNECTION_STATUS.UNAUTHORIZED;
+                this.fireOnLoginFailed(node.children.FirstOrDefault().tag);
+            }
+
+            if (ProtocolTreeNode.TagEquals(node, "receipt"))
+            {
+                string from = node.GetAttribute("from");
+                string id = node.GetAttribute("id");
+                string type = node.GetAttribute("type") ?? "delivery";
+                switch (type)
                 {
-                    if (ProtocolTreeNode.TagEquals(node, "challenge"))
-                    {
-                        this.processChallenge(node);
-                    }
-                    else if (ProtocolTreeNode.TagEquals(node, "success"))
-                    {
-                        this.loginStatus = CONNECTION_STATUS.LOGGEDIN;
-                        this.accountinfo = new AccountInfo(node.GetAttribute("status"),
-                                                           node.GetAttribute("kind"),
-                                                           node.GetAttribute("creation"),
-                                                           node.GetAttribute("expiration"));
-                        this.fireOnLoginSuccess(this.phoneNumber, node.GetData());
-                    }
-                    else if (ProtocolTreeNode.TagEquals(node, "failure"))
-                    {
-                        this.loginStatus = CONNECTION_STATUS.UNAUTHORIZED;
-                        this.fireOnLoginFailed(node.children.FirstOrDefault().tag);
-                    }
+                    case "delivery":
+                        //delivered to target
+                        this.fireOnGetMessageReceivedClient(from, id);
+                        break;
+                    case "read":
+                        //read by target
+                        //todo
+                        break;
+                    case "played":
+                        //played by target
+                        //todo
+                        break;
+                }
 
-                    if (ProtocolTreeNode.TagEquals(node, "receipt"))
-                    {
-                        string from = node.GetAttribute("from");
-                        string id = node.GetAttribute("id");
-                        string type = node.GetAttribute("type") ?? "delivery";
-                        switch (type)
-                        {
-                            case "delivery":
-                                //delivered to target
-                                this.fireOnGetMessageReceivedClient(from, id);
-                                break;
-                            case "read":
-                                //read by target
-                                //todo
-                                break;
-                            case "played":
-                                //played by target
-                                //todo
-                                break;
-                        }
+                //send ack
+                SendNotificationAck(node, type);
+            }
 
-                        //send ack
-                        SendNotificationAck(node, type);
-                    }
-
-                    if (ProtocolTreeNode.TagEquals(node, "message"))
-                    {
-                        this.handleMessage(node, autoReceipt);
-                    }
+            if (ProtocolTreeNode.TagEquals(node, "message"))
+            {
+                this.handleMessage(node, autoReceipt);
+            }
 
 
-                    if (ProtocolTreeNode.TagEquals(node, "iq"))
-                    {
-                        this.handleIq(node);
-                    }
+            if (ProtocolTreeNode.TagEquals(node, "iq"))
+            {
+                this.handleIq(node);
+            }
 
-                    if (ProtocolTreeNode.TagEquals(node, "stream:error"))
-                    {
-                        var textNode = node.GetChild("text");
-                        if (textNode != null)
-                        {
-                            string content = WhatsApp.SYSEncoding.GetString(textNode.GetData());
-                            Helper.DebugAdapter.Instance.fireOnPrintDebug("Error : " + content);
-                        }
-                        this.Disconnect();
-                    }
+            if (ProtocolTreeNode.TagEquals(node, "stream:error"))
+            {
+                var textNode = node.GetChild("text");
+                if (textNode != null)
+                {
+                    string content = WhatsApp.SYSEncoding.GetString(textNode.GetData());
+                    Helper.DebugAdapter.Instance.fireOnPrintDebug("Error : " + content);
+                }
+                this.Disconnect();
+            }
 
-                    if (ProtocolTreeNode.TagEquals(node, "presence"))
-                    {
-                        //presence node
-                        this.fireOnGetPresence(node.GetAttribute("from"), node.GetAttribute("type"));
-                    }
+            if (ProtocolTreeNode.TagEquals(node, "presence"))
+            {
+                //presence node
+                this.fireOnGetPresence(node.GetAttribute("from"), node.GetAttribute("type"));
+            }
 
-                    if (node.tag == "ib")
+            if (node.tag == "ib")
+            {
+                foreach (ProtocolTreeNode child in node.children)
+                {
+                    switch (child.tag)
                     {
-                        foreach (ProtocolTreeNode child in node.children)
-                        {
-                            switch (child.tag)
-                            {
-                                case "dirty":
-                                    this.SendClearDirty(child.GetAttribute("type"));
-                                    break;
-                                case "offline":
-                                    //this.SendQrSync(null);
-                                    break;
-                                default:
-                                    throw new NotImplementedException(node.NodeString());
-                            }
-                        }
+                        case "dirty":
+                            this.SendClearDirty(child.GetAttribute("type"));
+                            break;
+                        case "offline":
+                            //this.SendQrSync(null);
+                            break;
+                        default:
+                            throw new NotImplementedException(node.NodeString());
                     }
-
-                    if (node.tag == "chatstate")
-                    {
-                        string state = node.children.FirstOrDefault().tag;
-                        switch (state)
-                        {
-                            case "composing":
-                                this.fireOnGetTyping(node.GetAttribute("from"));
-                                break;
-                            case "paused":
-                                this.fireOnGetPaused(node.GetAttribute("from"));
-                                break;
-                            default:
-                                throw new NotImplementedException(node.NodeString());
-                        }
-                    }
-
-                    if (node.tag == "ack")
-                    {
-                        string cls = node.GetAttribute("class");
-                        if (cls == "message")
-                        {
-                            //server receipt
-                            this.fireOnGetMessageReceivedServer(node.GetAttribute("from"), node.GetAttribute("id"));
-                        }
-                    }
-
-                    if (node.tag == "notification")
-                    {
-                        this.handleNotification(node);
-                    }
-
-                    return true;
                 }
             }
-            catch (Exception e)
+
+            if (node.tag == "chatstate")
             {
-                throw e;
+                string state = node.children.FirstOrDefault().tag;
+                switch (state)
+                {
+                    case "composing":
+                        this.fireOnGetTyping(node.GetAttribute("from"));
+                        break;
+                    case "paused":
+                        this.fireOnGetPaused(node.GetAttribute("from"));
+                        break;
+                    default:
+                        throw new NotImplementedException(node.NodeString());
+                }
             }
-            return false;
+
+            if (node.tag == "ack")
+            {
+                string cls = node.GetAttribute("class");
+                if (cls == "message")
+                {
+                    //server receipt
+                    this.fireOnGetMessageReceivedServer(node.GetAttribute("from"), node.GetAttribute("id"));
+                }
+            }
+
+            if (node.tag == "notification")
+            {
+                this.handleNotification(node);
+            }
+
+            return true;
         }
 
         protected void handleMessage(ProtocolTreeNode node, bool autoReceipt)

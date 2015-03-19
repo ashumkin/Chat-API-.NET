@@ -317,14 +317,7 @@ namespace WhatsAppApi
 
                     TcpClient tc = new TcpClient(uri.Host, 443);
                     SslStream ssl = new SslStream(tc.GetStream());
-                    try
-                    {
-                        ssl.AuthenticateAsClient(uri.Host);
-                    }
-                    catch (Exception e)
-                    {
-                        throw e;
-                    }
+                    ssl.AuthenticateAsClient(uri.Host);
 
                     List<byte> buf = new List<byte>();
                     buf.AddRange(Encoding.UTF8.GetBytes(post));
