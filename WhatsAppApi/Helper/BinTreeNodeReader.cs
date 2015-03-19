@@ -130,7 +130,56 @@ namespace WhatsAppApi.Helper
                     ret = WhatsApp.SYSEncoding.GetBytes(server);
                 }
             }
+            else if (token == 255)
+            {
+                ret = WhatsApp.SYSEncoding.GetBytes(ReadNibble());
+            }
             return ret;
+        }
+
+        protected string ReadNibble()
+        {
+            var nextByte = readInt8();
+
+            var ignoreLastNibble = (nextByte & 0x80) != 0;
+            var size = (nextByte & 0x7f);
+            var nrOfNibbles = size * 2 - (ignoreLastNibble ? 1 : 0);
+
+            var data = fillArray(size);
+            var chars = new List<char>();
+
+            for (int i = 0; i < nrOfNibbles; i++)
+            {
+                nextByte = data[(int)Math.Floor(i / 2.0)];
+
+                var shift = 4 * (1 - i % 2);
+                byte dec = (byte)((nextByte & (15 << shift)) >> shift);
+
+                switch (dec)
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+                        chars.Add(dec.ToString()[0]);
+                        break;
+                    case 10:
+                        chars.Add('-');
+                        break;
+                    case 11:
+                        chars.Add('.');
+                        break;
+                    default:
+                        throw new Exception("Bad nibble: " + dec);
+                }
+            }
+            return new string(chars.ToArray());
         }
 
         protected IEnumerable<KeyValue> readAttributes(int size)
