@@ -11,7 +11,7 @@ namespace WhatsAppApi.Register
         public static string GenerateToken(string number)
         {
 
-			string token = "PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk1418865329241"+number;
+			string token = "PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk1425519315543"+number;
 			byte[] asciiBytes = ASCIIEncoding.ASCII.GetBytes(token);
 			byte[] hashedBytes = MD5CryptoServiceProvider.Create().ComputeHash(asciiBytes);
 			return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
