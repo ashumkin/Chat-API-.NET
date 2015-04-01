@@ -85,6 +85,7 @@ namespace WhatsAppApi.Register
                 PhoneNumber pn = new PhoneNumber(phoneNumber);
 
 				string uri = string.Format("https://v.whatsapp.net/v2/register?cc={0}&in={1}&id={2}&code={3}", pn.CC, pn.Number, id, code);
+				response = GetResponse(uri);
                 if (response.GetJsonValue("status") == "ok")
                 {
                     return response.GetJsonValue("pw");
