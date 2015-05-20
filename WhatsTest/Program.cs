@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.ComponentModel;
 using WhatsAppApi;
 using WhatsAppApi.Account;
 using WhatsAppApi.Helper;
@@ -79,6 +80,23 @@ namespace WhatsTest
         static void Instance_OnPrintDebug(object value)
         {
             Console.WriteLine(value);
+        }
+
+        static void DownloadProgressCallback(Object sender, DownloadProgressChangedEventArgs e)
+        {
+            Console.Write(String.Format("Got {0}% of {1}\r", e.ProgressPercentage, e.TotalBytesToReceive));
+            if (e.ProgressPercentage == 100) {
+                Console.Write("\n");
+            }
+        }
+
+        static void DownloadFileCompletedCallback(Object sender, AsyncCompletedEventArgs e)
+        {
+            if (e.Error != null) {
+                Console.WriteLine(String.Format("Download error: {0}", e.Error.Message));
+            } else {
+                Console.WriteLine("Download completed");
+            }
         }
 
         static void wa_OnGetPrivacySettings(Dictionary<ApiBase.VisibilityCategory, ApiBase.VisibilitySetting> settings)
@@ -160,6 +178,8 @@ namespace WhatsTest
             //download
             using (WebClient wc = new WebClient())
             {
+                wc.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadFileCompletedCallback);
+                wc.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback);
                 wc.DownloadFileAsync(new Uri(url), file, null);
             }
         }
