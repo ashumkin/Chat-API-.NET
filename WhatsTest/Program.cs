@@ -20,15 +20,27 @@ namespace WhatsTest
 {
     internal class Program
     {
+        private static void Usage()
+        {
+            Console.WriteLine("Usage: WhatsTest.exe SENDER PASSWORD TARGET");
+            Console.WriteLine(" SENDER - Mobile number with country code (but without + or 00)");
+            Console.WriteLine(" PASSWORD - v2 password");
+            Console.WriteLine(" TARGET - Mobile number to send the message to");
+        }
+
         private static void Main(string[] args)
         {
             var tmpEncoding = Encoding.UTF8;
             System.Console.OutputEncoding = Encoding.Default;
             System.Console.InputEncoding = Encoding.Default;
+            if (args.Length < 3) {
+                Usage();
+                Environment.Exit(1);
+            }
             string nickname = "WhatsApiNet";
-            string sender = "316******3"; // Mobile number with country code (but without + or 00)
-            string password = "xLl***************GSA=";//v2 password
-            string target = "316********6";// Mobile number to send the message to
+            string sender = args[0]; // Mobile number with country code (but without + or 00)
+            string password = args[1];//v2 password
+            string target = args[2];// Mobile number to send the message to
 
             WhatsApp wa = new WhatsApp(sender, password, nickname, true);
 
