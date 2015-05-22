@@ -325,7 +325,9 @@ namespace WhatsTest
                 if (line == null && line.Length == 0)
                     continue;
 
-                string command = line;
+                List<string> arguments = line.Split(' ').ToList();
+                string command = arguments[0];
+                arguments.RemoveAt(0);
                 switch (command)
                 {
                     case "/query":
@@ -348,6 +350,36 @@ namespace WhatsTest
                         break;
                     case "/pause":
                         wa.SendPaused(tmpUser.GetFullJid());
+                        break;
+                    case "/presence":
+                        if (arguments.Count == 0) {
+                            arguments.Add("active");
+                        }
+                        if (arguments[0] == "active") {
+                            wa.SendActive();
+                        } else {
+                            wa.SendInactive();
+                        }
+                        break;
+                    case "/getstatus":
+                        if (arguments.Count == 0) {
+                            arguments.Add(tmpUser.GetFullJid());
+                        }
+                        wa.SendGetStatuses(new string[] {arguments[0]});
+                        break;
+                    case "/status":
+                        if (arguments.Count == 0) {
+                            Console.WriteLine("Usage: /status MESSAGE");
+                        } else {
+                            wa.SendStatusUpdate(String.Join(" ", arguments.ToArray()));
+                        }
+                        break;
+                    case "/sync":
+                        if (arguments.Count == 0) {
+                            Console.WriteLine("Usage: /sync number [number...]");
+                        } else {
+                            wa.SendSync(arguments.ToArray());
+                        }
                         break;
                     default:
                         Console.WriteLine("[] Send message to {0}: {1}", tmpUser, line);
