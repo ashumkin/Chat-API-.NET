@@ -442,7 +442,8 @@ namespace WhatsAppApi
                 }
             }
             if (node.GetAttribute("type").Equals("get", StringComparison.OrdinalIgnoreCase)
-                && node.GetChild("ping") != null)
+                && (node.GetAttribute("xmlns").Equals("urn:xmpp:ping", StringComparison.OrdinalIgnoreCase))
+                    || node.GetChild("ping") != null)
             {
                 this.SendPong(node.GetAttribute("id"));
             }
