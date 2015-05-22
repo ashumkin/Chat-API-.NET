@@ -85,7 +85,7 @@ namespace WhatsAppApi
 
         public void Disconnect(Exception ex = null)
         {
-            this.whatsNetwork.Disconenct();
+            this.whatsNetwork.Disconnect();
             this.loginStatus = CONNECTION_STATUS.DISCONNECTED;
             this.fireOnDisconnect(ex);
         }

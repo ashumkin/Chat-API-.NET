@@ -79,7 +79,7 @@ namespace WhatsAppApi
         /// <summary>
         /// Disconnect from the whatsapp server
         /// </summary>
-        public void Disconenct()
+        public void Disconnect()
         {
             if (this.socket != null)
             {
