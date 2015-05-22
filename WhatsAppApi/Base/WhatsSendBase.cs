@@ -67,9 +67,9 @@ namespace WhatsAppApi
                         return this.processInboundData(nodeData, autoReceipt);
                     }
                 }
-                catch (ConnectionException)
+                catch (ConnectionException ex)
                 {
-                    this.Disconnect();
+                    this.Disconnect(ex);
                 }
             }
             return false;
