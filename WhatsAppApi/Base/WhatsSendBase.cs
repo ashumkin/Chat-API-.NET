@@ -227,12 +227,13 @@ namespace WhatsAppApi
             if (ProtocolTreeNode.TagEquals(node, "stream:error"))
             {
                 var textNode = node.GetChild("text");
+                string content = "";
                 if (textNode != null)
                 {
-                    string content = WhatsApp.SYSEncoding.GetString(textNode.GetData());
+                    content = WhatsApp.SYSEncoding.GetString(textNode.GetData());
                     Helper.DebugAdapter.Instance.fireOnPrintDebug("Error : " + content);
                 }
-                this.Disconnect();
+                this.Disconnect(new StreamErrorException(content));
             }
 
             if (ProtocolTreeNode.TagEquals(node, "presence"))

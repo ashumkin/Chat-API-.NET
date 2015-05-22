@@ -60,6 +60,7 @@
     <Compile Include="Helper\KeyStream.cs" />
     <Compile Include="Helper\KeyValue.cs" />
     <Compile Include="Helper\MediaUploader.cs" />
+    <Compile Include="Helper\StreamErrorException.cs" />
     <Compile Include="Helper\TokenMap.cs" />
     <Compile Include="Parser\PhoneNumber.cs" />
     <Compile Include="Helper\ProtocolTreeNode.cs" />
