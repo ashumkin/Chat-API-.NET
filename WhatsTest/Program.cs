@@ -67,6 +67,7 @@ namespace WhatsTest
             wa.OnGetSyncResult += wa_OnGetSyncResult;
             wa.OnGetStatus += wa_OnGetStatus;
             wa.OnGetPrivacySettings += wa_OnGetPrivacySettings;
+            wa.OnDisconnect += wa_OnDisconnect;
             DebugAdapter.Instance.OnPrintDebug += Instance_OnPrintDebug;
 
             wa.Connect();
@@ -109,6 +110,15 @@ namespace WhatsTest
             } else {
                 Console.WriteLine("Download completed");
             }
+        }
+
+        static void wa_OnDisconnect(Exception ex)
+        {
+            Console.Write("Disconnected");
+            if (ex != null) {
+                Console.Write(String.Format(" on exception: {0}", ex.ToString()));
+            }
+            Console.WriteLine("");
         }
 
         static void wa_OnGetPrivacySettings(Dictionary<ApiBase.VisibilityCategory, ApiBase.VisibilitySetting> settings)
