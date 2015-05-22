@@ -20,6 +20,8 @@ namespace WhatsTest
 {
     internal class Program
     {
+        private static string sender = "";
+        private static WhatsApp wa = null;
         private static void Usage()
         {
             Console.WriteLine("Usage: WhatsTest.exe SENDER PASSWORD TARGET");
@@ -38,11 +40,11 @@ namespace WhatsTest
                 Environment.Exit(1);
             }
             string nickname = "WhatsApiNet";
-            string sender = args[0]; // Mobile number with country code (but without + or 00)
+            sender = args[0]; // Mobile number with country code (but without + or 00)
             string password = args[1];//v2 password
             string target = args[2];// Mobile number to send the message to
 
-            WhatsApp wa = new WhatsApp(sender, password, nickname, true);
+            wa = new WhatsApp(sender, password, nickname, true);
 
             //event bindings
             wa.OnLoginSuccess += wa_OnLoginSuccess;
@@ -70,6 +72,14 @@ namespace WhatsTest
             wa.OnDisconnect += wa_OnDisconnect;
             DebugAdapter.Instance.OnPrintDebug += Instance_OnPrintDebug;
 
+            ConnectAndLogin(wa);
+
+            ProcessChat(wa, target);
+            Console.ReadKey();
+        }
+
+        private static void ConnectAndLogin(WhatsApp wa)
+        {
             wa.Connect();
 
             string datFile = getDatFileName(sender);
@@ -85,9 +95,6 @@ namespace WhatsTest
             }
 
             wa.Login(nextChallenge);
-
-            ProcessChat(wa, target);
-            Console.ReadKey();
         }
 
         static void Instance_OnPrintDebug(object value)
@@ -119,6 +126,9 @@ namespace WhatsTest
                 Console.Write(String.Format(" on exception: {0}", ex.ToString()));
             }
             Console.WriteLine("");
+            if (ex.GetType() == typeof(StreamErrorException)) {
+                ConnectAndLogin(wa);
+            }
         }
 
         static void wa_OnGetPrivacySettings(Dictionary<ApiBase.VisibilityCategory, ApiBase.VisibilitySetting> settings)
