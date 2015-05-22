@@ -276,6 +276,7 @@ namespace WhatsTest
         static void wa_OnGetMessage(ProtocolTreeNode node, string from, string id, string name, string message, bool receipt_sent)
         {
             Console.WriteLine("Message from {0} {1}: {2}", name, from, message);
+            // sendMessageReceived(node);
         }
 
         private static void wa_OnLoginFailed(string data)
@@ -366,6 +367,12 @@ namespace WhatsTest
                             arguments.Add(tmpUser.GetFullJid());
                         }
                         wa.SendGetStatuses(new string[] {arguments[0]});
+                        break;
+                    case "/delivery":
+                        if (arguments.Count == 0) {
+                            arguments.Add("");
+                        }
+//                        wa.sendMessageReceived(tmpUser.GetFullJid(), arguments[0]);
                         break;
                     case "/status":
                         if (arguments.Count == 0) {

@@ -78,6 +78,11 @@ namespace WhatsAppApi
             }
         }
 
+        public void sendMessageReceived(ProtocolTreeNode msg, string response = "received")
+        {
+            base.sendMessageReceived(msg, response);
+        }
+
         protected FMessage getFmessageImage(string to, byte[] ImageData, ImageType imgtype)
         {
             string type = string.Empty;
