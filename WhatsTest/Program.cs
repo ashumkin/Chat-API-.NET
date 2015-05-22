@@ -321,11 +321,11 @@ namespace WhatsTest
 
             while (true)
             {
-                string line = Console.ReadLine();
+                string line = Console.ReadLine().Trim();
                 if (line == null && line.Length == 0)
                     continue;
 
-                string command = line.Trim();
+                string command = line;
                 switch (command)
                 {
                     case "/query":
